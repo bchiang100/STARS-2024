@@ -1,48 +1,108 @@
-`timescale 1ms/10ps
-module tb_bcdadd1;
+`default_nettype none
+// Empty top module
 
-logic Cout, Cin;
-logic [3:0] totalSum, sumTemp;
-logic [3:0] A, B, S;
+module top (
+  // I/O ports
+  input  logic hz100, reset,
+  input  logic [20:0] pb,
+  output logic [7:0] left, right,
+         ss7, ss6, ss5, ss4, ss3, ss2, ss1, ss0,
+  output logic red, green, blue,
 
-bcdadd1 test (.A(A), .B(B), .Cin(Cin), .Cout_bcd(Cout), .S2(S));
+  // UART ports
+  output logic [7:0] txdata,
+  input  logic [7:0] rxdata,
+  output logic txclk, rxclk,
+  input  logic txready, rxready
+);
+  logic Cout;
+  logic [3:0] S;
 
-function integer bcdsum(A, B, Cin);
-  sumTemp = A + B + Cin;
-  return(sumTemp);
-endfunction
+  // bcdadd1 bcd1 (.A(pb[3:0]), .B(pb[7:4]), .Cin(pb[8]), .Cout_bcd(Cout), .S2(S));
+  // ssdec ssdec1 (.in(pb[3:0]), .out(ss7[6:0]), .enable(1'b1));
+  // ssdec ssdec2 (.in(pb[7:4]), .out(ss5[6:0]), .enable(1'b1));
+  // ssdec ssdec3 (.in({3'b0, Cout}), .out(ss1[6:0]), .enable(1'b1));
+  // ssdec ssdec4 (.in(S), .out(ss0[6:0]), .enable(1'b1));
 
-initial begin
-    // make sure to dump the signals so we can see them in the waveform
-    $dumpfile("sim.vcd");
-    $dumpvars(0, tb_bcdadd1);
+  
+endmodule
 
-    // for loop to test all possible inputs
-    for (integer i = 0; i <= 9; i++) begin
-        for (integer j = 0; j <= 9; j++) begin
-            for (integer k = 0; k <= 3; k++) begin
-                // set our input signals
-                //A = i; B = j; Cin = k;
-                A = {i[0], i[1], i[2], i[3]};
-                B = {j[0], j[1], j[2], j[3]};
-                Cin = k[0];
-                #1;
-                // display inputs and outputs
-                $display("A=%b, B=%b, Cin=%b, Cout=%b, S=%b", A, B, Cin, Cout, S);
-                
-                  if (bcdsum(A, B, Cin) > 9 || Cout) begin   
-                    totalSum = bcdsum(A, B, Cin) + 6;
-                  end
-                  else begin
-                    totalSum  = bcdsum(A, B, Cin) +  0;
-                  end
-                end
-            
-        end
-    end
-
-    // finish the simulation
-    #1 $finish;
+module ssdec (
+input logic [3:0] in,
+input logic enable,
+output logic [6:0] out
+);
+always_comb begin
+  case(in)
+    4'b0000: begin out = 7'b0111111; end
+    4'b0001: begin out = 7'b0000110; end
+    4'b0010: begin out = 7'b1011011; end
+    4'b0011: begin out = 7'b1001111; end
+    4'b0100: begin out = 7'b1100110; end
+    4'b0101: begin out = 7'b1101101; end
+    4'b0110: begin out = 7'b1111100; end
+    4'b0111: begin out = 7'b0000111; end
+    4'b1000: begin out = 7'b1111111; end
+    4'b1001: begin out = 7'b1100111; end
+    4'b1010: begin out = 7'b1110111; end
+    4'b1011: begin out = 7'b1111100; end
+    4'b1100: begin out = 7'b0111001; end
+    4'b1101: begin out = 7'b1011110; end
+    4'b1110: begin out = 7'b1111001; end
+    4'b1111: begin out = 7'b1110001; end
+    default: begin out = '0; end
+  endcase
 end
+
+endmodule
+
+module fa(
+  input logic A, B, Cin,
+  output logic Cout, S
+);
+
+  assign Cout = B && Cin || A && B || A && Cin;
+  assign S = ~A && ~B && Cin || ~A && B && ~Cin || A && B && Cin || A && ~B && ~Cin;
+
+endmodule
+
+module fa4(
+  input logic [3:0] A, B,
+  input logic Cin,
+  output logic Cout, 
+  output logic [3:0] S
+);
+  logic Cin0,  Cin1, Cin2;
+  logic Cout0, Cout1, Cout2; 
+fa adder1 (.A(A[0]), .B(B[0]), .Cin(Cin), .Cout(Cout0), .S(S[0]));
+fa adder2 (.A(A[1]), .B(B[1]), .Cin(Cout0), .Cout(Cout1), .S(S[1]));
+fa adder3 (.A(A[2]), .B(B[2]), .Cin(Cout1), .Cout(Cout2), .S(S[2]));
+fa adder4 (.A(A[3]), .B(B[3]), .Cin(Cout2), .Cout(Cout), .S(S[3]));
+endmodule
+
+module bcdadd1 (
+  input logic [3:0] A, B,
+  input logic Cin,
+  output logic Cout_bcd, 
+  output logic [3:0] S2
+);
+  logic [3:0] newB, S1;
+  logic Cout1;
+// 4-bit ripple carry adder
+  fa4 fa4_1 (.A(A), .B(B), .Cin(Cin), .Cout(Cout1), .S(S1));
+  //Cout_bcd || ((S1[3] && S1[2]) || (S1[3] && S1[1]) > 4'b1001) ? newB = 4'b0110 : newB = 4'b0000;
+  always_comb begin
+    if (Cout1 || (S1 > 4'b1001)) begin
+      newB = 4'b0110;
+      Cout_bcd = 1'b1;
+    end
+    else begin
+      newB = 4'b0000;
+      Cout_bcd = 1'b0;
+    end
+  end
+
+  fa4 fa4_2 (.A(S1), .B(newB), .Cin(1'b0), .Cout(), .S(S2));
+
 
 endmodule
