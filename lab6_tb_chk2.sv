@@ -7,8 +7,17 @@ logic [3:0] A, B, S;
 
 bcdadd1 test (.A(A), .B(B), .Cin(Cin), .Cout_bcd(Cout), .S2(S));
 
-function integer bcdsum(A, B, Cin);
+function integer bcdsum(logic [3:0] A, B, Cin);
   sumTemp = A + B + Cin;
+
+  if ({Cout, S} == sumTemp) begin   
+    totalSum = sumTemp + 6;
+    end
+    else begin
+      totalSum  = sumTemp +  0;
+    end
+  
+
   return(sumTemp);
 endfunction
 
@@ -20,23 +29,23 @@ initial begin
     // for loop to test all possible inputs
     for (integer i = 0; i <= 9; i++) begin
         for (integer j = 0; j <= 9; j++) begin
-            for (integer k = 0; k <= 3; k++) begin
+            for (integer k = 0; k <= 1; k++) begin
                 // set our input signals
                 //A = i; B = j; Cin = k;
-                A = {i[0], i[1], i[2], i[3]};
-                B = {j[0], j[1], j[2], j[3]};
+                A = {i[3], i[2], i[1], i[0]};
+                B = {j[3], j[2], j[1], j[0]};
                 Cin = k[0];
                 #1;
                 // display inputs and outputs
                 $display("A=%b, B=%b, Cin=%b, Cout=%b, S=%b", A, B, Cin, Cout, S);
-                
-                  if (bcdsum(A, B, Cin) > 9 || Cout) begin   
-                    totalSum = bcdsum(A, B, Cin) + 6;
-                  end
-                  else begin
-                    totalSum  = bcdsum(A, B, Cin) +  0;
-                  end
+
+                if (S == sumTemp) begin 
+                  $display("\n%b is the same as %b\n", S, sumTemp);
                 end
+                // if (bcdsum(A, B, Cin) > 9) begin
+                //   $display("%d is also the same as %b\n", Cout, sumTemp);
+                // end
+            end
             
         end
     end
