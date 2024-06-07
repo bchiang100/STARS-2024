@@ -25,9 +25,9 @@ synckey sync1 (.in(in), .out(out), .strbout(strbout), .clk(clk), .rst(rst));
 
     task chk_strb;
         if (rst == 1) 
-            #10;
-            exp_strb = 1;
-            #10;
+        #10;
+        exp_strb = 1;
+        #10;
     endtask
 
 initial begin
