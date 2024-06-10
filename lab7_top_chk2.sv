@@ -34,8 +34,8 @@ assign right[4:0] = out5;
 assign left[3:0] = current_state;
 logic [7:0] out8;
 
-synckey sync1 (.clk(clk), .rst(rst), .in(pb[19:0]), .out(out5), .strbout(strobe));
-fsm fsm1 (.clk(red), .rst(rst), .keyout(out5), .seq(seq), .state(current_state));
+// synckey sync1 (.clk(clk), .rst(rst), .in(pb[19:0]), .out(out5), .strbout(strobe));
+// fsm fsm1 (.clk(red), .rst(rst), .keyout(out5), .seq(seq), .state(current_state));
 
 assign blue = (current_state == OPEN) ? 1 : 0;
 
@@ -46,9 +46,9 @@ always_ff @(posedge strobe, posedge rst) begin
     out8 <= {3'b0, out5};
   end
 end
-ssdec ssdec1 (.in(out8[3:0]), .enable(1'b1), .out(ss0[6:0]));
-ssdec ssdec2 (.in(out8[7:4]), .enable(1'b1), .out(ss1[6:0]));
-ssdec s7 (.in(current_state), .enable(1'b1), .out(ss7[6:0]));
+// ssdec ssdec1 (.in(out8[3:0]), .enable(1'b1), .out(ss0[6:0]));
+// ssdec ssdec2 (.in(out8[7:4]), .enable(1'b1), .out(ss1[6:0]));
+// ssdec s7 (.in(current_state), .enable(1'b1), .out(ss7[6:0]));
 
 endmodule
 
