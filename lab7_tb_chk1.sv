@@ -42,16 +42,18 @@ initial begin
     in = 20'b0;
     for (integer i = 0; i <= 19; i++) begin
         
-        
         @(posedge clk); // delay inside the for loop repeat(2) @(poseedge clk)
         in[i] = 1'b1;
         
+        toggle_reset();
+        chk_strb();
+
         $display("exp_out is %b and out is %b", exp_out, out);
 
         if (exp_out != out)
             $display("EXP_OUT AND OUT ARE NOT THE SAME");
-        toggle_reset();
-        chk_strb();
+
+       
         $display("exp_strb is %b, and strbout is %b", exp_strb, strbout);
         if (exp_strb != strbout)
             $display("exp_strb does not match with strbout!");
