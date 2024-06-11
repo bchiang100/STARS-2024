@@ -1,6 +1,6 @@
 `default_nettype none
 
-typedef enum logic [3:0] {
+typedef enum logic [3:0] { // state decoder
 LS0=0, LS1=1, LS2=2, LS3=3, LS4=4, LS5=5, LS6=6, LS7=7,
 OPEN=8, ALARM=9, INIT=10  
 } state_t;
@@ -19,29 +19,30 @@ module top (
  output logic txclk, rxclk,
  input  logic txready, rxready
 );
-logic clk, rst;
-logic [31:0] seq;
+logic clk, rst; // clock and reset
+logic [31:0] seq; // sequence logic that is set by user
+logic [4:0] out5;
 logic strobe;
+state_t current_state;
 
 logic [63:0] ss;
-assign clk=hz100;
-assign rst=reset;
-assign seq = 32'h12345678;
-assign red = strobe;
-
-state_t current_state;
-logic [4:0] out5;
-assign right[4:0] = out5;
-assign left[3:0] = current_state;
 logic [7:0] out8;
 logic [31:0] out32;
 logic en;
-assign en = (current_state == INIT);
 
-sequencesr sequencer (.clk(clk), .rst(rst), .en(en), .in(out5), .out(out32));
-display disp1 (.red(red), .green(green), .blue(blue), .state(current_state), .seq(seq), .ss(ss));
+assign right[4:0] = out5; // assigns the 5 right LED lights on the FPGA to out5
+assign left[3:0] = current_state; // displays the current state to the left four LED lights
+assign clk=hz100;
+assign rst=reset;
+
+assign en = (current_state == INIT); // enabler for when the current state is at the "INIT" state
+
+
+// Module Instantiations
+sequencesr sequencer (.clk(strobe), .rst(rst), .en(~out5[4] && en), .in(out5), .out(seq));
+display disp1 (.red(strobe), .green(green), .blue(blue), .state(current_state), .seq(seq), .ss(ss));
 synckey sync1 (.clk(clk), .rst(rst), .in(pb[19:0]), .out(out5), .strbout(strobe));
-fsm fsm1 (.clk(red), .rst(rst), .keyout(out5), .seq(out32), .state(current_state));
+fsm fsm1 (.clk(strobe), .rst(rst), .keyout(out5), .seq(seq), .state(current_state));
 
 assign blue = (current_state == OPEN) ? 1 : 0;
 
@@ -52,30 +53,27 @@ always_ff @(posedge strobe, posedge rst) begin
     out8 <= {3'b0, out5};
   end
 end
-//  ssdec ssdec1 (.in(out8[3:0]), .enable(1'b1), .out(ss0[6:0]));
-//  ssdec ssdec2 (.in(out8[7:4]), .enable(1'b1), .out(ss1[6:0]));
-//  ssdec s7 (.in(current_state), .enable(1'b1), .out(ss7[6:0]));
 
- assign {ss7, ss6, ss5, ss4, ss3, ss2, ss1, ss0} = ss;
+assign {ss7, ss6, ss5, ss4, ss3, ss2, ss1, ss0} = ss; // concatenates all eight digit pinouts (including the decimal point) to ss
 
 endmodule
 
 module sequencesr(
-    input logic clk, rst, en,
-    input logic [4:0] in,
-    output logic [31:0] out
+  input logic clk, rst, en,
+  input logic [4:0] in,
+  output logic [31:0] out
 );
 
-    always_ff @(posedge clk) begin// sequential logic
-      if (rst) begin
-        for (integer i = 0; i < 32; i++) begin
-            out[i] <= 0; // sets register to 0
-        end
-        end
-        if (en) begin
-            out <= ((en) && (in < 5'd16)) ? {out[27:0], in[3:0]} : out;
-        end
-    end  
+  always_ff @(posedge clk) begin// sequential logic
+    if (rst) begin
+      for (integer i = 0; i < 32; i++) begin
+          out[i] <= 0; // sets register to 0
+      end
+    end
+    if (en) begin
+        out <= ((en) && (in < 5'd16)) ? {out[27:0], in[3:0]} : out;
+    end
+  end  
 
 endmodule
 
@@ -96,37 +94,27 @@ module display(
   ssdec sstemp7 (.in(seq[27:24]), .enable(1'b1), .out(ss_temp[54:48]));
   ssdec sstemp8 (.in(seq[31:28]), .enable(1'b1), .out(ss_temp[62:56]));
 
-
 always_comb begin
   ss = 0;
   case(state)
-    INIT: begin
+    INIT:
       ss = ss_temp;
-    end
-    LS0: begin
+    LS0:
       ss[7] = 1'b1;
-    end
-    LS1: begin
+    LS1:
       ss[15] = 1'b1;
-    end
-    LS2: begin
+    LS2: 
       ss[23] = 1'b1;
-    end
-    LS3: begin
+    LS3:
       ss[31] = 1'b1;
-    end
-    LS4: begin
+    LS4:
       ss[39] = 1'b1;
-    end
-    LS5: begin
+    LS5:
       ss[47] = 1'b1;
-    end
-    LS6: begin
+    LS6:
       ss[55] = 1'b1;
-    end
-    LS7: begin
+    LS7:
       ss[63] = 1'b1;
-    end
     OPEN: begin
       ss[6:0] = 7'b0110111;
       ss[14:8] = 7'b1111001;
@@ -145,7 +133,6 @@ always_comb begin
     end
     default: begin
       ss = 0;
-      // next_state = state;
     end
   endcase
 end
@@ -333,7 +320,6 @@ module ssdec(
      4'b1101: begin out = 7'b1011110; end
      4'b1110: begin out = 7'b1111001; end
      4'b1111: begin out = 7'b1110001; end
-
 
      default: begin out = '0; end 
  endcase 
