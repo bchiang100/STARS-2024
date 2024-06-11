@@ -23,6 +23,7 @@ logic clk, rst;
 logic [31:0] seq;
 logic strobe;
 
+logic [63:0] ss;
 assign clk=hz100;
 assign rst=reset;
 assign seq = 32'h12345678;
@@ -34,8 +35,11 @@ assign right[4:0] = out5;
 assign left[3:0] = current_state;
 logic [7:0] out8;
 logic [31:0] out32;
-sequencesr sequencer (.clk(clk), .rst(rst), .en(en), .in(out5), .out(out32));
+logic en;
+assign en = (current_state == INIT);
 
+sequencesr sequencer (.clk(clk), .rst(rst), .en(en), .in(out5), .out(out32));
+display disp1 (.red(red), .green(green), .blue(blue), .state(current_state), .seq(seq), .ss(ss));
  synckey sync1 (.clk(clk), .rst(rst), .in(pb[19:0]), .out(out5), .strbout(strobe));
  fsm fsm1 (.clk(red), .rst(rst), .keyout(out5), .seq(out32), .state(current_state));
 
@@ -61,31 +65,77 @@ module sequencesr(
 );
 
     always_ff @(posedge clk, posedge rst) begin// sequential logic
-    if (rst) begin
-        current_state <= INIT;
+      if (rst) begin
         for (integer i = 0; i < 32; i++) begin
             out[i] <= 0; // sets register to 0
         end
-         end // else begin
-        //     current_state <= next_state;
-        // end
+        end
+        if (en) begin
+            out[31:4] <= out[27:0]; // shifts data left 4 bits
+            out[3:0] <= in; // shifts "in" data into the register
+        end
+    end  
+
+endmodule
+
+module display(
+  input logic [3:0] state,
+  input logic [31:0] seq,
+  output logic [63:0] ss,
+  output logic red, green, blue
+);
+  logic [63:0] ss_temp;
+
+  ssdec sstemp1 (.in(seq[3:0]), .enable(1'b1), .out(ss_temp[6:0]));
+  ssdec sstemp2 (.in(seq[7:4]), .enable(1'b1), .out(ss_temp[14:8]));
+  ssdec sstemp3 (.in(seq[11:8]), .enable(1'b1), .out(ss_temp[22:16]));
+  ssdec sstemp4 (.in(seq[15:12]), .enable(1'b1), .out(ss_temp[30:24]));
+  ssdec sstemp5 (.in(seq[19:16]), .enable(1'b1), .out(ss_temp[38:32]));
+  ssdec sstemp6 (.in(seq[23:20]), .enable(1'b1), .out(ss_temp[46:40]));
+  ssdec sstemp7 (.in(seq[27:24]), .enable(1'b1), .out(ss_temp[54:48]));
+  ssdec sstemp8 (.in(seq[31:28]), .enable(1'b1), .out(ss_temp[62:56]));
+
+
+always_comb begin
+  ss = 0;
+  case(state)
+    INIT:
+      ss = ss_temp;
+    LS0:
+      ss[7] = 1'b1;
+    LS1:
+      ss[15] = 1'b1;
+    LS2:
+      ss[23] = 1'b1;
+    LS3:
+      ss[31] = 1'b1;
+    LS4:
+      ss[39] = 1'b1;
+    LS5:
+      ss[47] = 1'b1;
+    LS6:
+      ss[55] = 1'b1;
+    LS7:
+      ss[63] = 1'b1;
+    OPEN: begin
+      ss[6:0] = 7'b0110111;
+      ss[14:8] = 7'b1111001;
+      ss[22:16] = 7'b1110011;
+      ss[30:24] = 7'b0111111; // PRINTS OPEN
     end
- // QUESTION: DO I NEED TO IMPLEMENT NEXT STATE BECAUSE FSM ALREADY CALCULATES NEXT STATE
-    always_comb begin
-        //next_state = current_state;
-        case(current_state)
-            INIT: begin
-                if (en) begin
-                    out[31:4] <= out[27:0]; // shifts data left 4 bits
-                    out[3:0] <= in; // shifts "in" data into the register
-                end
-                if (in == 5'b10000) begin
-                    next_state = LS0;
-                end
-            end
-        endcase
+    ALARM: begin
+      ss[6:0] = 7'b0000110;
+      ss[14:8] = 7'b0000110;
+      ss[22:16] = 7'b1100111;
+  
+      ss[38:32] = 7'b0111000;
+      ss[46:40] = 7'b0111000;
+      ss[54:48] = 7'b1110111;
+      ss[62:56] = 7'b0111001; // PRINTS CALL 911
     end
-    
+    default:
+  endcase
+end
 
 endmodule
 
