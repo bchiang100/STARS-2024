@@ -33,9 +33,11 @@ logic [4:0] out5;
 assign right[4:0] = out5;
 assign left[3:0] = current_state;
 logic [7:0] out8;
+logic [31:0] out32;
+sequencesr sequencer (.clk(clk), .rst(rst), .en(en), .in(out5), .out(out32));
 
-// synckey sync1 (.clk(clk), .rst(rst), .in(pb[19:0]), .out(out5), .strbout(strobe));
-// fsm fsm1 (.clk(red), .rst(rst), .keyout(out5), .seq(seq), .state(current_state));
+ synckey sync1 (.clk(clk), .rst(rst), .in(pb[19:0]), .out(out5), .strbout(strobe));
+ fsm fsm1 (.clk(red), .rst(rst), .keyout(out5), .seq(out32), .state(current_state));
 
 assign blue = (current_state == OPEN) ? 1 : 0;
 
@@ -46,18 +48,45 @@ always_ff @(posedge strobe, posedge rst) begin
     out8 <= {3'b0, out5};
   end
 end
-// ssdec ssdec1 (.in(out8[3:0]), .enable(1'b1), .out(ss0[6:0]));
-// ssdec ssdec2 (.in(out8[7:4]), .enable(1'b1), .out(ss1[6:0]));
-// ssdec s7 (.in(current_state), .enable(1'b1), .out(ss7[6:0]));
+ ssdec ssdec1 (.in(out8[3:0]), .enable(1'b1), .out(ss0[6:0]));
+ ssdec ssdec2 (.in(out8[7:4]), .enable(1'b1), .out(ss1[6:0]));
+ ssdec s7 (.in(current_state), .enable(1'b1), .out(ss7[6:0]));
 
 endmodule
 
 module sequencesr(
-  input logic clk, rst, en,
-  input logic [4:0] in,
-  output logic [31:0] out
+    input logic clk, rst, en,
+    input logic [4:0] in,
+    output logic [31:0] out
 );
-  
+
+    always_ff @(posedge clk, posedge rst) begin// sequential logic
+    if (rst) begin
+        current_state <= INIT;
+        for (integer i = 0; i < 32; i++) begin
+            out[i] <= 0; // sets register to 0
+        end
+         end // else begin
+        //     current_state <= next_state;
+        // end
+    end
+ // QUESTION: DO I NEED TO IMPLEMENT NEXT STATE BECAUSE FSM ALREADY CALCULATES NEXT STATE
+    always_comb begin
+        //next_state = current_state;
+        case(current_state)
+            INIT: begin
+                if (en) begin
+                    out[31:4] <= out[27:0]; // shifts data left 4 bits
+                    out[3:0] <= in; // shifts "in" data into the register
+                end
+                if (in == 5'b10000) begin
+                    next_state = LS0;
+                end
+            end
+        endcase
+    end
+    
+
 endmodule
 
 module fsm(
