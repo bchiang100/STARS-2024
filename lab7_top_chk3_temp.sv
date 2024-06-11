@@ -2,7 +2,7 @@
 
 typedef enum logic [3:0] {
 LS0=0, LS1=1, LS2=2, LS3=3, LS4=4, LS5=5, LS6=6, LS7=7,
-OPEN=8, ALARM=9, INIT=10
+OPEN=8, ALARM=9, INIT=10  
 } state_t;
 
 module top (
@@ -40,8 +40,8 @@ assign en = (current_state == INIT);
 
 sequencesr sequencer (.clk(clk), .rst(rst), .en(en), .in(out5), .out(out32));
 display disp1 (.red(red), .green(green), .blue(blue), .state(current_state), .seq(seq), .ss(ss));
- synckey sync1 (.clk(clk), .rst(rst), .in(pb[19:0]), .out(out5), .strbout(strobe));
- fsm fsm1 (.clk(red), .rst(rst), .keyout(out5), .seq(out32), .state(current_state));
+synckey sync1 (.clk(clk), .rst(rst), .in(pb[19:0]), .out(out5), .strbout(strobe));
+fsm fsm1 (.clk(red), .rst(rst), .keyout(out5), .seq(out32), .state(current_state));
 
 assign blue = (current_state == OPEN) ? 1 : 0;
 
@@ -52,9 +52,11 @@ always_ff @(posedge strobe, posedge rst) begin
     out8 <= {3'b0, out5};
   end
 end
- ssdec ssdec1 (.in(out8[3:0]), .enable(1'b1), .out(ss0[6:0]));
- ssdec ssdec2 (.in(out8[7:4]), .enable(1'b1), .out(ss1[6:0]));
- ssdec s7 (.in(current_state), .enable(1'b1), .out(ss7[6:0]));
+//  ssdec ssdec1 (.in(out8[3:0]), .enable(1'b1), .out(ss0[6:0]));
+//  ssdec ssdec2 (.in(out8[7:4]), .enable(1'b1), .out(ss1[6:0]));
+//  ssdec s7 (.in(current_state), .enable(1'b1), .out(ss7[6:0]));
+
+ assign {ss7, ss6, ss5, ss4, ss3, ss2, ss1, ss0} = ss;
 
 endmodule
 
@@ -64,15 +66,14 @@ module sequencesr(
     output logic [31:0] out
 );
 
-    always_ff @(posedge clk, posedge rst) begin// sequential logic
+    always_ff @(posedge clk) begin// sequential logic
       if (rst) begin
         for (integer i = 0; i < 32; i++) begin
             out[i] <= 0; // sets register to 0
         end
         end
         if (en) begin
-            out[31:4] <= out[27:0]; // shifts data left 4 bits
-            out[3:0] <= in; // shifts "in" data into the register
+            out <= ((en) && (in < 5'd16)) ? {out[27:0], in[3:0]} : out;
         end
     end  
 
@@ -99,24 +100,33 @@ module display(
 always_comb begin
   ss = 0;
   case(state)
-    INIT:
+    INIT: begin
       ss = ss_temp;
-    LS0:
+    end
+    LS0: begin
       ss[7] = 1'b1;
-    LS1:
+    end
+    LS1: begin
       ss[15] = 1'b1;
-    LS2:
+    end
+    LS2: begin
       ss[23] = 1'b1;
-    LS3:
+    end
+    LS3: begin
       ss[31] = 1'b1;
-    LS4:
+    end
+    LS4: begin
       ss[39] = 1'b1;
-    LS5:
+    end
+    LS5: begin
       ss[47] = 1'b1;
-    LS6:
+    end
+    LS6: begin
       ss[55] = 1'b1;
-    LS7:
+    end
+    LS7: begin
       ss[63] = 1'b1;
+    end
     OPEN: begin
       ss[6:0] = 7'b0110111;
       ss[14:8] = 7'b1111001;
@@ -133,7 +143,10 @@ always_comb begin
       ss[54:48] = 7'b1110111;
       ss[62:56] = 7'b0111001; // PRINTS CALL 911
     end
-    default:
+    default: begin
+      ss = 0;
+      // next_state = state;
+    end
   endcase
 end
 
