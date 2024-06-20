@@ -10,9 +10,10 @@ module sound_generator(
 );
 logic newGoodColl, newBadColl;
 logic [3:0] newDirection;
+logic [8:0] freq;
 
 MODE_TYPES next_state;
-MODE_TYPES mode_o;
+MODE_TYPES mode_o; // current state
 always_ff @(posedge clk) begin
     newGoodColl <= goodColl;
     newBadColl <= badColl;
@@ -27,13 +28,14 @@ always_ff @(posedge clk, negedge nRst) begin
 end
 
 always_comb begin
+    playSound = 1'b0;
     next_state = mode_o;
     case (mode_o)
         ON:
             if (buttonPressed) begin
                 next_state = OFF;
             end
-            else if (goodColl || badColl || |direction) begin
+            else if (newGoodColl || newBadColl || |newDirection) begin
                 playSound = 1'b1;
             end
         OFF:
@@ -42,10 +44,14 @@ always_comb begin
             end
     endcase
 end
-endmodule
 
-module counter(
-
-);
-
+always_comb begin
+    freq = 0;
+    if (goodColl)
+        freq = 440; // A
+    if (badColl)
+        freq = 311; // D Sharp
+    if (|direction)
+        freq = 262; // C
+end
 endmodule
