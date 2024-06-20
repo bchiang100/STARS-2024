@@ -1,19 +1,24 @@
+// THIS MODULE CONTAINS THE POSITIVE EDGE DETECTOR, FSM LOGIC, AND FREQUENCY SELECTOR LOGIC
+
 typedef enum logic {
     OFF = 1'b0,
     ON = 1'b1
 } MODE_TYPES;
 
-module sound_generator(
+module sound_fsm(
     input logic clk, nRst, goodColl, badColl, buttonPressed,
     input logic [3:0] direction,
-    output logic playSound
+    output logic playSound,
+    output logic [8:0] freq,
+    output MODE_TYPES mode_o // current state
 );
 logic newGoodColl, newBadColl;
 logic [3:0] newDirection;
-logic [8:0] freq;
+
 
 MODE_TYPES next_state;
-MODE_TYPES mode_o; // current state
+
+// Positive Edge Detector
 always_ff @(posedge clk) begin
     newGoodColl <= goodColl;
     newBadColl <= badColl;
@@ -45,6 +50,7 @@ always_comb begin
     endcase
 end
 
+// Frequency Selector
 always_comb begin
     freq = 0;
     if (goodColl)
@@ -55,3 +61,4 @@ always_comb begin
         freq = 262; // C
 end
 endmodule
+
