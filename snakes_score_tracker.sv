@@ -1,3 +1,4 @@
+`timescale 1ns / 10ps
 module score_tracker(
     input logic clk, nRst, goodColl, badColl,
     output logic [6:0] currScore, highScore,
