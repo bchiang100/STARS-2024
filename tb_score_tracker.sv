@@ -39,15 +39,7 @@ module tb_score_tracker ();
     endtask
     
     // Task that presses the button once
-    task single_button_press;
-    begin
-        @(negedge tb_clk);
-        tb_button_i = 1'b1; 
-        @(negedge tb_clk);
-        tb_button_i = 1'b0; 
-        @(posedge tb_clk);  // Task ends in rising edge of clock: remember this!
-    end
-    endtask
+   
 
 // Task to check current score output
     task check_currentScore;
@@ -67,7 +59,7 @@ module tb_score_tracker ();
 
     // Task to check high score output
     task check_highScore;
-    input logic[4:0] exp_highScore; 
+    input logic[6:0] exp_highScore; 
     begin
         @(negedge tb_clk);
         tb_checking_outputs = 1'b1;
@@ -94,15 +86,15 @@ module tb_score_tracker ();
                 .nRst(tb_nRst_i),
                 .goodColl(tb_goodColl),
                 .badColl(tb_badColl),
-                .currScore(tb_currScore)
-                .highScore(tb_highScore)
+                .currScore(tb_currScore),
+                .highScore(tb_highScore),
                 .isGameComplete(tb_isGameComplete)); 
 
     // Main Test Bench Process
     initial begin
         // Signal dump
         $dumpfile("dump.vcd");
-        $dumpvars; 
+        $dumpvars;
 
         // Initialize test bench signals
         tb_nRst_i = 1'b1;
@@ -127,7 +119,7 @@ module tb_score_tracker ();
         // Wait for a bit before checking for correct functionality
         #(2);
         check_currentScore('0);
-c       check_highScore('0);
+       check_highScore('0);
 
         // Check that the reset value is maintained during a clock cycle
         @(negedge tb_clk);
@@ -149,6 +141,7 @@ c       check_highScore('0);
 
         // Snake eats an apple
         tb_goodColl = 1'b1;
+        
         #(CLK_PERIOD); // allow for some delay
         check_currentScore(7'b1); 
         check_highScore(7'b1); 
