@@ -30,9 +30,6 @@ module tb_score_tracker ();
         @(posedge tb_clk);
     endtask
     
-    // Task that presses the button once
-   
-
 // Task to check current score output
     task check_currentScore;
     input logic[6:0] exp_currScore; 
@@ -131,12 +128,33 @@ module tb_score_tracker ();
         check_currentScore('0); 
         check_highScore('0);
 
-        // Snake eats an apple
+        // Snake eats apple #1
         tb_goodColl = 1'b1;
-        
         #(CLK_PERIOD); // allow for some delay
+        tb_goodColl = 1'b0;
         check_currentScore(7'b1); 
         check_highScore(7'b1); 
+
+        // Snake eats apple #2
+        tb_goodColl = 1'b1;
+        #(CLK_PERIOD); // allow for some delay
+        tb_goodColl = 1'b0;
+        check_currentScore(7'd2); 
+        check_highScore(7'd2); 
+
+        // Snake eats apple #3
+        tb_goodColl = 1'b1;
+        #(CLK_PERIOD); // allow for some delay
+        tb_goodColl = 1'b0;
+        check_currentScore(7'd3); 
+        check_highScore(7'd3); 
+
+        // Snake eats apple #4
+        tb_goodColl = 1'b1;
+        #(CLK_PERIOD); // allow for some delay
+        tb_goodColl = 1'b0;
+        check_currentScore(7'd4); 
+        check_highScore(7'd4); 
  
         $finish; 
     end
