@@ -21,7 +21,10 @@ module tb_score_tracker ();
 
     // DUT ports
     logic tb_clk, tb_nRst_i;
-    logic tb_button_i;
+    logic tb_goodColl, tb_badColl;
+    logic [6:0] tb_currScore, tb_highScore;
+    logic tb_isGameComplete;
+
     logic [4:0] tb_time_o;
     logic [2:0] tb_mode_o;
 
@@ -46,33 +49,32 @@ module tb_score_tracker ();
     end
     endtask
 
-    // Task to check mode output
-    task check_mode_o;
-    input logic [2:0] expected_mode; 
-    input string string_mode; 
+// Task to check current score output
+    task check_currentScore;
+    input logic[6:0] exp_currScore; 
     begin
-        @(negedge tb_clk); 
-        tb_checking_outputs = 1'b1; 
-        if(tb_mode_o == expected_mode)
-            $info("Correct Mode: %s.", string_mode);
+        @(negedge tb_clk);
+        tb_checking_outputs = 1'b1;
+        if(tb_currScore == exp_currScore)
+            $info("Correct current score: %0d.", exp_currScore);
         else
-            $error("Incorrect mode. Expected: %s. Actual: %s.", string_mode, tb_mode_o); 
+            $error("Incorrect current score. Expected: %0d. Actual: %0d.", exp_currScore, tb_currScore); 
         
         #(1);
         tb_checking_outputs = 1'b0;  
     end
     endtask
 
-    // Task to check time output
-    task check_time_o;
-    input logic[4:0] exp_time_o; 
+    // Task to check high score output
+    task check_highScore;
+    input logic[4:0] exp_highScore; 
     begin
         @(negedge tb_clk);
         tb_checking_outputs = 1'b1;
-        if(tb_time_o == exp_time_o)
-            $info("Correct time_o: %0d.", exp_time_o);
+        if(tb_highScore == exp_highScore)
+            $info("Correct high score: %0d.", exp_highScore);
         else
-            $error("Incorrect mode. Expected: %0d. Actual: %0d.", exp_time_o, tb_time_o); 
+            $error("Incorrect high score. Expected: %0d. Actual: %0d.", exp_highScore, tb_highScore); 
         
         #(1);
         tb_checking_outputs = 1'b0;  
@@ -89,10 +91,12 @@ module tb_score_tracker ();
 
     // DUT Portmap
     stop_watch DUT(.clk(tb_clk),
-                .nRst_i(tb_nRst_i),
-                .button_i(tb_button_i),
-                .mode_o(tb_mode_o),
-                .time_o(tb_time_o)); 
+                .nRst(tb_nRst_i),
+                .goodColl(tb_goodColl),
+                .badColl(tb_badColl),
+                .currScore(tb_currScore)
+                .highScore(tb_highScore)
+                .isGameComplete(tb_isGameComplete)); 
 
     // Main Test Bench Process
     initial begin
@@ -101,8 +105,9 @@ module tb_score_tracker ();
         $dumpvars; 
 
         // Initialize test bench signals
-        tb_button_i = 1'b0; 
         tb_nRst_i = 1'b1;
+        tb_goodColl = 1'b0;
+        tb_badColl = 1'b0;
         tb_checking_outputs = 1'b0;
         tb_test_num = -1;
         tb_test_case = "Initializing";
@@ -117,54 +122,36 @@ module tb_score_tracker ();
         tb_test_case = "Test Case 0: Power-on-Reset of the DUT";
         $display("\n\n%s", tb_test_case);
 
-        tb_button_i = 1'b1;  // press button
         tb_nRst_i = 1'b0;  // activate reset
 
         // Wait for a bit before checking for correct functionality
         #(2);
-        check_mode_o(IDLE, "IDLE");
-        check_time_o('0);
+        check_currentScore('0);
+c       check_highScore('0);
 
         // Check that the reset value is maintained during a clock cycle
         @(negedge tb_clk);
-        check_mode_o(IDLE, "IDLE");
-        check_time_o('0);
+        check_currentScore('0);
+        check_highScore('0);
 
-        // Release the reset away from a clock edge
-        @(negedge tb_clk);
-        tb_nRst_i  = 1'b1;   // Deactivate the chip reset
-        // Check that internal state was correctly keep after reset release
-        check_mode_o(IDLE, "IDLE");
-        check_time_o('0);
-
-        tb_button_i = 1'b0;  // release button
 
         // ************************************************************************
-        // Test Case 1: Iterating through the different modes
+        // Test Case 1: Updating currentScore and highScore
         // ************************************************************************
         tb_test_num += 1;
         reset_dut;
-        tb_test_case = "Test Case 1: Iterating through the different modes";
+        tb_test_case = "Test Case 1: Updating currentScore and highScore";
         $display("\n\n%s", tb_test_case);
 
         // Initially, mode_o is IDLE
-        check_mode_o(IDLE, "IDLE"); 
+        check_currentScore('0); 
+        check_highScore('0);
 
-        // Press button (IDLE->CLEAR)
-        single_button_press(); 
-        #(CLK_PERIOD * 5); // allow for sync + edge det + FSM delay 
-        check_mode_o(CLEAR, "CLEAR"); 
-
-        // Press button (CLEAR->RUNNING)
-        single_button_press(); 
-        #(CLK_PERIOD * 5);
-        check_mode_o(RUNNING, "RUNNING"); 
-
-        // Press button (back to IDLE)
-        single_button_press(); 
-        #(CLK_PERIOD * 5);
-        check_mode_o(IDLE, "IDLE"); 
-
+        // Snake eats an apple
+        tb_goodColl = 1'b1;
+        #(CLK_PERIOD); // allow for some delay
+        check_currentScore(7'b1); 
+        check_highScore(7'b1); 
  
         $finish; 
     end
