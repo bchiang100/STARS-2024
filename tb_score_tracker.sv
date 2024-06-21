@@ -108,7 +108,7 @@ module tb_score_tracker ();
         // Wait for a bit before checking for correct functionality
         #(2);
         check_currentScore('0);
-       check_highScore('0);
+        check_highScore('0);
 
         // Check that the reset value is maintained during a clock cycle
         @(negedge tb_clk);
@@ -121,6 +121,7 @@ module tb_score_tracker ();
         // ************************************************************************
         tb_test_num += 1;
         reset_dut;
+        #(CLK_PERIOD); // allow for some delay
         tb_test_case = "Test Case 1: Updating currentScore and highScore";
         $display("\n\n%s", tb_test_case);
 
@@ -152,6 +153,86 @@ module tb_score_tracker ();
         check_currentScore(7'd4); 
         check_highScore(7'd4); 
  
+        // ************************************************************************
+        // Test Case 2: Testing badColl
+        // ************************************************************************
+        tb_test_num += 1;
+        reset_dut;
+        #(CLK_PERIOD); // allow for some delay
+        tb_test_case = "Test Case 2: Testing badColl";
+        $display("\n\n%s", tb_test_case);
+
+        // Snake eats apple #1
+        tb_goodColl = 1'b1;
+        #(CLK_PERIOD); // allow for some delay
+        tb_goodColl = 1'b0;
+        check_currentScore(7'b1); 
+        check_highScore(7'b1); 
+
+        // Snake collides with border
+        tb_badColl = 1'b1;
+        #(CLK_PERIOD); // allow for some delay
+        tb_badColl = 1'b0;
+        check_currentScore(7'b0); 
+        check_highScore(7'd2); 
+
+        // ************************************************************************
+        // Test Case 3: Test highScore Override
+        // ************************************************************************
+        tb_test_num += 1;
+        reset_dut;
+        #(CLK_PERIOD); // allow for some delay
+        tb_test_case = "Test Case 3: Test highScore Override";
+        $display("\n\n%s", tb_test_case);
+
+        // Snake eats apple #1
+        tb_goodColl = 1'b1;
+        #(CLK_PERIOD); // allow for some delay
+        tb_goodColl = 1'b0;
+        check_currentScore(7'b1); 
+        check_highScore(7'b1); 
+
+        // Snake eats apple #2
+        tb_goodColl = 1'b1;
+        #(CLK_PERIOD); // allow for some delay
+        tb_goodColl = 1'b0;
+        check_currentScore(7'd2); 
+        check_highScore(7'd2); 
+
+        // Snake collides with border and ends game
+        tb_badColl = 1'b1;
+        #(CLK_PERIOD); // allow for some delay
+        tb_badColl = 1'b0;
+        check_currentScore(7'b0); 
+        check_highScore(7'd2); 
+        
+        // Snake eats apple #1
+        tb_goodColl = 1'b1;
+        #(CLK_PERIOD); // allow for some delay
+        tb_goodColl = 1'b0;
+        check_currentScore(7'b1); 
+        check_highScore(7'b1); 
+
+        // Snake eats apple #2
+        tb_goodColl = 1'b1;
+        #(CLK_PERIOD); // allow for some delay
+        tb_goodColl = 1'b0;
+        check_currentScore(7'd2); 
+        check_highScore(7'd2); 
+
+        // Snake eats apple #3
+        tb_goodColl = 1'b1;
+        #(CLK_PERIOD); // allow for some delay
+        tb_goodColl = 1'b0;
+        check_currentScore(7'd3); 
+        check_highScore(7'd3); 
+
+        // Snake eats apple #4
+        tb_goodColl = 1'b1;
+        #(CLK_PERIOD); // allow for some delay
+        tb_goodColl = 1'b0;
+        check_currentScore(7'd4); 
+        check_highScore(7'd4); 
         $finish; 
     end
 
