@@ -5,7 +5,7 @@ typedef enum logic {
 
 module oscillator
 #(
-    parameter N = 7
+    parameter N = 8
 )
 (
     input logic clk, nRst,

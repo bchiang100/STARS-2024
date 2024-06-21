@@ -5,10 +5,10 @@ typedef enum logic {
 
 module sound_generator
 #(
-    parameter N = 7
+    parameter N = 8
 )
 (
-    input logic clk, nRst, goodColl_i, badColl_i, buttonPressed_i,
+    input logic clk, nRst, goodColl_i, badColl_i, button_i,
     input logic [3:0] direction_i,
     output logic [N - 1:0] dacCount
 );

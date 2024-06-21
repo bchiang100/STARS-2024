@@ -5,7 +5,7 @@
 
 `timescale 1ms / 100us
 
-module tb_border_snakes ();
+module tb_border_generator ();
 
     // Enum for mode types
     typedef enum logic {
