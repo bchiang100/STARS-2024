@@ -5,7 +5,7 @@ module score_tracker(
     output logic isGameComplete
 );
     logic [6:0] nextCurrScore, nextHighScore, maxScore;
-    assign maxScore = 100;
+    assign maxScore = 50;
    
     always_ff @(posedge clk, negedge nRst) begin
         if (~nRst) begin
