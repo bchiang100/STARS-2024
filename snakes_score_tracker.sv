@@ -23,8 +23,8 @@ module score_tracker(
         nextHighScore = highScore;
         if (goodColl) begin
             nextCurrScore = currScore + 1;
-            if (currScore > highScore) begin
-                nextHighScore = currScore;
+            if (nextCurrScore > nextHighScore) begin
+                nextHighScore = nextCurrScore;
             end
         end
         if (badColl || currScore >= maxScore) begin
