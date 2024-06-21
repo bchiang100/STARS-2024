@@ -57,7 +57,6 @@ module tb_border_snakes ();
         // Initialize test bench signals
         tb_x = 4'b0;
         tb_y = 4'b0;
-        tb_isBorder = 1'b0;
         tb_checking_outputs = 1'b0;
         tb_test_num = 0;
 
@@ -69,8 +68,8 @@ module tb_border_snakes ();
         $display("\n\n%s", tb_test_case);
 
         for (integer i = 0; i < 16; i++) begin
-            for (integer j = 0; j < 16; j++) begin
-                if (i == 0 || i == 15 || j == 0 || j == 15) begin
+            for (integer j = 0; j < 12; j++) begin
+                if (i == 0 || i == 15 || j == 0 || j == 11) begin
                     exp_isBorder = 1'b1;
                 end else begin
                     exp_isBorder = 1'b0;
