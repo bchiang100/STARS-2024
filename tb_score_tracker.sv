@@ -3,15 +3,9 @@
     Description: Test bench for score tracker module
 */
 
-`timescale 1ms / 100us
+`timescale 1ns / 10ps
 
 module tb_score_tracker ();
-
-    // Enum for mode types
-    typedef enum logic {
-    OFF = 1'b0,
-    ON = 1'b1
-    } MODE_TYPES;
 
     // Testbench parameters
     localparam CLK_PERIOD = 10; // 100 Hz clk
@@ -25,8 +19,6 @@ module tb_score_tracker ();
     logic [6:0] tb_currScore, tb_highScore;
     logic tb_isGameComplete;
 
-    logic [4:0] tb_time_o;
-    logic [2:0] tb_mode_o;
 
     // Reset DUT Task
     task reset_dut;
@@ -82,7 +74,7 @@ module tb_score_tracker ();
     end
 
     // DUT Portmap
-    stop_watch DUT(.clk(tb_clk),
+    score_tracker DUT(.clk(tb_clk),
                 .nRst(tb_nRst_i),
                 .goodColl(tb_goodColl),
                 .badColl(tb_badColl),
