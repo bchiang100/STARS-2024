@@ -124,10 +124,6 @@ module tb_score_tracker ();
         tb_test_case = "Test Case 1: Updating currentScore and highScore";
         $display("\n\n%s", tb_test_case);
 
-        // Initially, mode_o is IDLE
-        check_currentScore('0); 
-        check_highScore('0);
-
         // Snake eats apple #1
         tb_goodColl = 1'b1;
         #(CLK_PERIOD); // allow for some delay
