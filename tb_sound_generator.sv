@@ -46,21 +46,21 @@ module tb_sound_generator ();
     endtask
 
     // Task to check mode output
-    task check_mode_o;
-    input logic [2:0] expected_mode; 
-    input string string_mode; 
-    begin
-        @(negedge tb_clk); 
-        tb_checking_outputs = 1'b1; 
-        if(tb_mode_o == expected_mode)
-            $info("Correct Mode: %s.", string_mode);
-        else
-            $error("Incorrect mode. Expected: %s. Actual: %s.", string_mode, tb_mode_o); 
+    //task check_mode_o;
+    //input logic [2:0] expected_mode; 
+    //input string string_mode; 
+    //begin
+        //@(negedge tb_clk); 
+        //tb_checking_outputs = 1'b1; 
+        //if(tb_mode_o == expected_mode)
+            //$info("Correct Mode: %s.", string_mode);
+        //else
+            //$error("Incorrect mode. Expected: %s. Actual: %s.", string_mode, tb_mode_o); 
         
-        #(1);
-        tb_checking_outputs = 1'b0;  
-    end
-    endtask
+        //#(1);
+        // = 1'b0;  
+    //end
+    //endtask
 
     // Task to check time output
     task check_count;
@@ -71,7 +71,7 @@ module tb_sound_generator ();
         if(tb_dacCount == exp_dacCount)
             $info("Correct dacCount: %0d.", exp_dacCount);
         else
-            $error("Incorrect mode. Expected: %0d. Actual: %0d.", exp_tdacCount, tb_dacCount); 
+            $error("Incorrect mode. Expected: %0d. Actual: %0d.", exp_dacCount, tb_dacCount); 
         
         #(1);
         tb_checking_outputs = 1'b0;  
@@ -87,7 +87,7 @@ module tb_sound_generator ();
     end
 
     // DUT Portmap
-    stop_watch DUT(.clk(tb_clk),
+    sound_generator DUT(.clk(tb_clk),
                 .nRst_i(tb_nRst_i),
                 .button_i(tb_button_i),
                 .goodColl_i(tb_goodColl_i),
@@ -124,17 +124,17 @@ module tb_sound_generator ();
         // Wait for a bit before checking for correct functionality
         #(2);
         
-        check_dacCount('0);
+        check_count('0);
 
         // Check that the reset value is maintained during a clock cycle
         @(negedge tb_clk);
-        check_dacCount('0);
+        check_count('0);
 
         // Release the reset away from a clock edge
         @(negedge tb_clk);
         tb_nRst_i  = 1'b1;   // Deactivate the chip reset
         // Check that internal state was correctly keep after reset release
-        check_dacCount('0);
+        check_count('0);
 
         $finish; 
     end
